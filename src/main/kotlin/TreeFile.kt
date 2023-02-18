@@ -1,3 +1,3 @@
-data class TreeFile(val fileName: String, val fileSize: Int, val parent: Directory) {
+data class TreeFile(val fileName: String, val fileSize: Long, val parent: Directory) {
 
 }
