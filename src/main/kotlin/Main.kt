@@ -2,109 +2,93 @@ import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
 
-class FileTreeProcessor() {
-    val scanner = Scanner(File("C:\\Users\\baras\\IdeaProjects\\FileTreeParser\\src\\main\\resources\\input.txt"))
+private const val DIRECTORY_SEPARATOR = "|"
+private const val ROOT = "root"
+private const val PATH_SEPARATOR = "/"
+private const val FILE_SEPARATOR = ':'
 
-    val pathSeparator = "/"
-    fun getNextLine() = scanner.nextLine()
+class FileTreeParser(absoluteFilePath: String) {
+    private val scanner = Scanner(File(absoluteFilePath))
+    private fun getNextLine() = if (scanner.hasNext()) scanner.nextLine() else null
 
-    fun process(directoriesByPath: HashMap<String, Directory>, fileToPath: HashMap<TreeFile, LinkedList<String>>): Directory {
-
-        val root = Directory("root", getNextLine().split("|")[1].toLong(), null, "root")
+    fun parseFileTree(): FileTree {
+        val nextLine = getNextLine() ?: throw RuntimeException("Cannot build file tree from empty file")
+        val root = Directory(nextLine.split(DIRECTORY_SEPARATOR)[1].toLong(), ROOT)
+        val fileTree = FileTree(root)
 
         while (scanner.hasNext()) {
-            processLine(root, directoriesByPath, fileToPath)
+            processLine(root, fileTree)
         }
-
         scanner.close()
 
-        return root
+        return fileTree
     }
 
-    fun processLine(
-        parent: Directory,
-        directoriesByPath: HashMap<String, Directory>,
-        fileToPath: HashMap<TreeFile, LinkedList<String>>
+    private fun processLine(
+        parent: Directory, fileTree: FileTree
     ): Directory {
-
-        val line = getNextLine()
-
-        if (line == null) return parent
+        val line = getNextLine() ?: return parent
 
         var directory = parent
-        val indexOfSeparator = line.indexOf('|')
+        val indexOfSeparator = line.indexOf(DIRECTORY_SEPARATOR)
         if (indexOfSeparator != -1) {
-            val directoryName = line.substring(0, indexOfSeparator)
-            val directorySize = line.substring(indexOfSeparator + 1, line.length).toLong()
-
-            val fullPath = parent.fullPath + pathSeparator + directoryName
-            directory = Directory(directoryName, directorySize, parent, fullPath)
-            parent.directories.add(directory)
-            directoriesByPath[fullPath] = directory
-
-//            parent.totalSize=+directory.totalSize
-//            println(directory)
-
-            for (i in 1..directorySize) {
-                processLine(directory, directoriesByPath, fileToPath)
-            }
-
+            directory = parseDirectory(line, indexOfSeparator, parent, fileTree)
         } else {
-            val fileParameters = line.split(':')
-            val fileName = fileParameters[0]
-            val fileSize = fileParameters[1].toLong()
-            val file = TreeFile(fileName, fileSize, directory)
-            directory.files.add(file)
-            var locations = fileToPath[file]
-            if(locations == null){
-                locations = LinkedList<String>()
-                fileToPath[file] = locations
-            }
-            locations.add(parent.fullPath + pathSeparator + fileName)
-
+            addParsedFileToParentDirectory(line, directory, fileTree, parent)
         }
-
         return directory
+    }
+
+    private fun parseDirectory(
+        line: String, indexOfSeparator: Int, parent: Directory, fileTree: FileTree
+    ): Directory {
+        val directoryName = line.substring(0, indexOfSeparator)
+        val directorySize = line.substring(indexOfSeparator + 1, line.length).toLong()
+
+        val fullPath = parent.fullPath + PATH_SEPARATOR + directoryName
+        val currentDirectory = Directory(directorySize, fullPath)
+        parent.directories.add(currentDirectory)
+        fileTree.directoriesByPath[fullPath] = currentDirectory
+
+
+        for (i in 1..directorySize) {
+            processLine(currentDirectory, fileTree)
+        }
+        return currentDirectory
+    }
+
+    private fun addParsedFileToParentDirectory(
+        line: String, directory: Directory, fileTree: FileTree, parent: Directory
+    ) {
+        val fileParameters = line.split(FILE_SEPARATOR)
+        val fileName = fileParameters[0]
+        val fileSize = fileParameters[1].toLong()
+        val file = TreeFile(fileName, fileSize)
+        directory.files.add(file)
+        var locations = fileTree.fileToPath[file]
+        if (locations == null) {
+            locations = LinkedList<String>()
+            fileTree.fileToPath[file] = locations
+        }
+        locations.add(parent.fullPath + PATH_SEPARATOR + fileName)
     }
 }
 
 fun main() {
-
-    val fileTree = FileTree().of()
-
-//    println(fileTree.getDirectorySize("root/dir_lt/dir_ko/dir_mu"))
-
-    fileTree.getDuplicates()
 }
 
-class FileTree() {
+class FileTree(root: Directory) {
 
-    private val directoriesByPath = HashMap<String, Directory>()
-    private val fileToPath = HashMap<TreeFile, LinkedList<String>>()
-    lateinit var root: Directory
+    val directoriesByPath: HashMap<String, Directory> = HashMap()
+    val fileToPath: HashMap<TreeFile, LinkedList<String>> = HashMap()
 
-    fun of(): FileTree {
-        val fileTree = FileTree()
-        fileTree.root = FileTreeProcessor().process(fileTree.directoriesByPath, fileTree.fileToPath)
-        fileTree.directoriesByPath["root"] = fileTree.root
-        return fileTree
+    init {
+        this.directoriesByPath[ROOT] = root
     }
 
-//    fun getDirectorySize(path: Path): Long {
-//        //todo convert path to string
-//        //todo find target directory
-//        //todo calculate sum of elements size + nested directories
-//
-//        return getDirectorySize(path.toString())
-//    }
+    //todo convert path to string
 
-    fun getDirectorySize(path: String): Long {
-
-        val directory = directoriesByPath[path]
-
-        return calculateSize(directory)
-
-    }
+    fun getDirectorySize(path: String): Long = calculateSize(directoriesByPath[path])
 
     private fun calculateSize(directory: Directory?): Long {
         val filesTotalSize = directory?.files?.sumOf { it.fileSize } ?: 0
@@ -112,9 +96,7 @@ class FileTree() {
         return filesTotalSize + nestedDirectoriesSize
     }
 
-    fun getDuplicates(){
-        fileToPath.values.filter { it.size > 1 }.forEach{ println(it) }
-    }
+    fun getDuplicates() = fileToPath.values.filter { it.size > 1 }.flatten().toList()
 }
 
 
