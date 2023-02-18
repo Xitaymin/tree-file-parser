@@ -19,6 +19,7 @@ class FileTreeParser(absoluteFilePath: String) {
         while (scanner.hasNext()) {
             processLine(root, fileTree)
         }
+
         scanner.close()
 
         return fileTree
@@ -47,9 +48,7 @@ class FileTreeParser(absoluteFilePath: String) {
 
         val fullPath = parent.fullPath + PATH_SEPARATOR + directoryName
         val currentDirectory = Directory(directorySize, fullPath)
-        parent.directories.add(currentDirectory)
-        fileTree.directoriesByPath[fullPath] = currentDirectory
-
+        parent.directoriesByName[directoryName] = currentDirectory
 
         for (i in 1..directorySize) {
             processLine(currentDirectory, fileTree)
@@ -77,26 +76,33 @@ class FileTreeParser(absoluteFilePath: String) {
 fun main() {
 }
 
-class FileTree(root: Directory) {
+class FileTree(val root: Directory) {
 
-    val directoriesByPath: HashMap<String, Directory> = HashMap()
     val fileToPath: HashMap<TreeFile, LinkedList<String>> = HashMap()
 
-    init {
-        this.directoriesByPath[ROOT] = root
-    }
 
     //todo convert path to string
 
-    fun getDirectorySize(path: String): Long = calculateSize(directoriesByPath[path])
+    fun getDirectorySize(path: String): Long {
+        val splitedPath = path.split(PATH_SEPARATOR)
+        //todo get target directory
+        var directory = root
+        for (i: Int in 1 until splitedPath.size){
+            directory = directory.directoriesByName[splitedPath[i]] ?: throw RuntimeException("Not found directory by entered path")
+        }
+        return calculateSize(directory)
+    }
 
-    private fun calculateSize(directory: Directory?): Long {
-        val filesTotalSize = directory?.files?.sumOf { it.fileSize } ?: 0
-        val nestedDirectoriesSize = directory?.directories?.sumOf { calculateSize(it) } ?: 0
+    private fun calculateSize(directory: Directory): Long {
+        val filesTotalSize = directory.files.sumOf { it.fileSize }
+        val nestedDirectoriesSize = directory.directoriesByName.values.sumOf { calculateSize(it) }
         return filesTotalSize + nestedDirectoriesSize
     }
 
-    fun getDuplicates() = fileToPath.values.filter { it.size > 1 }.flatten().toList()
+    fun getDuplicates(): List<String> {
+        return fileToPath.values.filter { it.size > 1 }.flatten().toList()
+
+    }
 }
 
 

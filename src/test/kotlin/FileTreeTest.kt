@@ -47,8 +47,6 @@ internal class FileTreeTest {
 
         directorySize = fileTree.getDirectorySize("root/dir_lt/dir_ko/dir_mu")
         println(directorySize)
-
-
     }
 
     private fun getFileTree(path: String) =
