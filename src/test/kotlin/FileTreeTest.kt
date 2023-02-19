@@ -7,8 +7,8 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
-private const val SMALL_TEST_FILE = "C:\\Users\\baras\\IdeaProjects\\FileTreeParser\\src\\test\\resources\\simpleInput.txt"
-private const val BIG_TEST_FILE = "C:\\Users\\baras\\IdeaProjects\\FileTreeParser\\src\\test\\resources\\input.txt"
+private const val SMALL_TEST_FILE = "src\\test\\resources\\simpleInput.txt"
+private const val BIG_TEST_FILE = "src\\test\\resources\\input.txt"
 
 internal class FileTreeTest {
 

@@ -1,6 +1,6 @@
 package edu.xitaymin.filetreeparser
 
-import edu.xitaymin.filetreeparser.exception.FileTreeException
+import edu.xitaymin.filetreeparser.exception.FileTreeOperationException
 import java.util.ArrayList
 import java.util.LinkedHashMap
 
@@ -11,7 +11,7 @@ class FileTree(private val root: Directory) {
 
         var directory = root
         for (i: Int in 1 until pathParts.size){
-            directory = directory.directoriesByName[pathParts[i]] ?: throw FileTreeException("Not found directory by entered path")
+            directory = directory.directoriesByName[pathParts[i]] ?: throw FileTreeOperationException("Not found directory by entered path")
         }
 
         return calculateSize(directory)
