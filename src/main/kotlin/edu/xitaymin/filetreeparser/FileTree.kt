@@ -17,12 +17,6 @@ class FileTree(private val root: Directory) {
         return calculateSize(directory)
     }
 
-    private fun calculateSize(directory: Directory): Long {
-        val filesTotalSize = directory.files.sumOf { it.fileSize }
-        val nestedDirectoriesSize = directory.directoriesByName.values.sumOf { calculateSize(it) }
-        return filesTotalSize + nestedDirectoriesSize
-    }
-
     fun getDuplicates(): HashSet<String> {
         val duplicatedFilesPaths = LinkedHashSet<String>()
         val fileToPath = HashMap<File, String>()
@@ -30,6 +24,12 @@ class FileTree(private val root: Directory) {
         findDuplicatedFilesInDirectory(duplicatedFilesPaths, fileToPath, root)
 
         return duplicatedFilesPaths
+    }
+
+    private fun calculateSize(directory: Directory): Long {
+        val filesTotalSize = directory.files.sumOf { it.fileSize }
+        val nestedDirectoriesSize = directory.directoriesByName.values.sumOf { calculateSize(it) }
+        return filesTotalSize + nestedDirectoriesSize
     }
 
     private fun findDuplicatedFilesInDirectory(
