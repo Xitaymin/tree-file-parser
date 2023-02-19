@@ -1,3 +1,4 @@
+import edu.xitaymin.filetreeparser.FileTreeParser
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
@@ -6,14 +7,14 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
-private const val SMALL_TEST_FILE = "C:\\Users\\baras\\IdeaProjects\\FileTreeParser\\src\\main\\resources\\simpleInput.txt"
-private const val BIG_TEST_FILE = "C:\\Users\\baras\\IdeaProjects\\FileTreeParser\\src\\main\\resources\\input.txt"
+private const val SMALL_TEST_FILE = "src\\test\\resources\\simpleInput.txt"
+private const val BIG_TEST_FILE = "src\\test\\resources\\input.txt"
 
 internal class FileTreeTest {
 
     private companion object {
         @JvmStatic
-        fun directoryArguments() = Stream.of(
+        fun directoryArguments(): Stream<Arguments> = Stream.of(
             Arguments.of("root", 36923799),
             Arguments.of("root/dir_aa", 35880217),
             Arguments.of("root/dir_mn", 490672),
@@ -47,8 +48,6 @@ internal class FileTreeTest {
 
         directorySize = fileTree.getDirectorySize("root/dir_lt/dir_ko/dir_mu")
         println(directorySize)
-
-
     }
 
     private fun getFileTree(path: String) =
